@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJwtInspector", "OpenJwtInspector.csproj", "{FBA23CC5-079B-4A9C-B031-9499EE1507BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenJwtInspector.Tests", "..\OpenJwtInspector.Tests\OpenJwtInspector.Tests.csproj", "{A223B582-DD06-4029-AB1C-09DCC4EE4C14}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FBA23CC5-079B-4A9C-B031-9499EE1507BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBA23CC5-079B-4A9C-B031-9499EE1507BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBA23CC5-079B-4A9C-B031-9499EE1507BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBA23CC5-079B-4A9C-B031-9499EE1507BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A223B582-DD06-4029-AB1C-09DCC4EE4C14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A223B582-DD06-4029-AB1C-09DCC4EE4C14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A223B582-DD06-4029-AB1C-09DCC4EE4C14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A223B582-DD06-4029-AB1C-09DCC4EE4C14}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C180490B-4D85-4B12-8B5A-BBC858384810}
+	EndGlobalSection
+EndGlobal
