@@ -25,7 +25,7 @@ The library supports various use cases, such as decoding JWT payloads, validatin
 You can install the library via the NuGet package manager with the following command:
 
 ```bash
-dotnet add package JwtInspector
+dotnet add package JwtInspector.Core
 ```
 
 ## Usage
