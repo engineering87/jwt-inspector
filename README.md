@@ -157,7 +157,7 @@ If you'd like to contribute, please fork, fix, commit and send a pull request fo
 
  * [Setting up Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git)
  * [Fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
- * [Open an issue](https://github.com/engineering87/open-jwt-inspector/issues) if you encounter a bug or have a suggestion for improvements/features
+ * [Open an issue](https://github.com/engineering87/jwt-inspector/issues) if you encounter a bug or have a suggestion for improvements/features
 
 ## Licensee
 JwtInspector source code is available under MIT License, see license in the source.
