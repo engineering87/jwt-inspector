@@ -1,12 +1,12 @@
 ﻿// (c) 2022 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-using OpenJwtInspector.Exceptions;
-using OpenJwtInspector.Interfaces;
+using JwtInspector.Core.Interfaces;
+using JwtInspector.Core.Exceptions;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
 
-namespace OpenJwtInspector.Services
+namespace JwtInspector.Core.Services
 {
     /// <summary>
     /// Service to decode JWT tokens.
@@ -137,7 +137,7 @@ namespace OpenJwtInspector.Services
             try
             {
                 var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
-                return jwtToken.ValidTo != DateTime.MinValue ? jwtToken.ValidTo : (DateTime?)null;
+                return jwtToken.ValidTo != DateTime.MinValue ? jwtToken.ValidTo : null;
             }
             catch (Exception ex)
             {
@@ -151,7 +151,7 @@ namespace OpenJwtInspector.Services
             try
             {
                 var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
-                return jwtToken.IssuedAt != DateTime.MinValue ? jwtToken.IssuedAt : (DateTime?)null;
+                return jwtToken.IssuedAt != DateTime.MinValue ? jwtToken.IssuedAt : null;
             }
             catch (Exception ex)
             {

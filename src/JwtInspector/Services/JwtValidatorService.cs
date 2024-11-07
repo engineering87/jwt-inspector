@@ -1,12 +1,12 @@
 ﻿// (c) 2022 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.IdentityModel.Tokens;
-using OpenJwtInspector.Exceptions;
-using OpenJwtInspector.Interfaces;
+using JwtInspector.Core.Exceptions;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using JwtInspector.Core.Interfaces;
 
-namespace OpenJwtInspector.Services
+namespace JwtInspector.Core.Services
 {
     /// <summary>
     /// Service to validate JWT tokens.
@@ -54,7 +54,7 @@ namespace OpenJwtInspector.Services
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
 
-            return jwtToken.ValidTo == DateTime.MinValue ? (DateTime?)null : jwtToken.ValidTo;
+            return jwtToken.ValidTo == DateTime.MinValue ? null : jwtToken.ValidTo;
         }
 
         /// <inheritdoc />

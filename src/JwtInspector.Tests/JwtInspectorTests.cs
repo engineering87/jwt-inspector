@@ -1,22 +1,20 @@
 ﻿// (c) 2022 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Tokens;
-using OpenJwtInspector.Interfaces;
-using OpenJwtInspector.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using JwtInspector.Core.Interfaces;
+using JwtInspector.Core.Services;
 
-namespace OpenJwtInspector.Tests
+namespace JwtInspector.Tests
 {
     public class JwtInspectorTests
     {
-        private readonly IJwtDecoder _jwtDecoder;
-        private readonly IJwtValidator _jwtValidator;
+        private readonly IJwtInspector _jwtInspector;
 
         public JwtInspectorTests()
         {
-            _jwtDecoder = new JwtDecoderService();
-            _jwtValidator = new JwtValidatorService();
+            _jwtInspector = new JwtInspectorService();
         }
 
         [Fact]
@@ -26,7 +24,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
 
             // Act
-            var claims = _jwtDecoder.DecodePayloadAsJson(token);
+            var claims = _jwtInspector.DecodePayloadAsJson(token);
 
             // Assert
             Assert.NotEmpty(claims);
@@ -39,7 +37,7 @@ namespace OpenJwtInspector.Tests
             string input = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9";
 
             // Act
-            var decodedString = _jwtDecoder.DecodeBase64Url(input);
+            var decodedString = _jwtInspector.DecodeBase64Url(input);
 
             // Assert
             Assert.Equal("{\"alg\": \"HS256\", \"typ\": \"JWT\"}", decodedString);
@@ -52,7 +50,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
 
             // Act
-            var (header, payload, signature) = _jwtDecoder.ExtractJwtParts(token);
+            var (header, payload, signature) = _jwtInspector.ExtractJwtParts(token);
 
             // Assert
             Assert.NotNull(header);
@@ -67,7 +65,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
 
             // Act
-            var audience = _jwtDecoder.GetAudience(token);
+            var audience = _jwtInspector.GetAudience(token);
 
             // Assert
             Assert.Equal("", audience);
@@ -80,7 +78,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
 
             // Act
-            var claims = _jwtDecoder.GetClaims(token);
+            var claims = _jwtInspector.GetClaims(token);
 
             // Assert
             Assert.Contains("sub", claims.Keys);
@@ -94,7 +92,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzMwOTQxMjYwLCJleHAiOjE3MzA5NDQ4NjAsImp0aSI6InVuaXF1ZS1qd3QtaWQtMTIzNDUifQ.2pMlyxG2GFLsVTV3w8rKkIQyFq5qNG3hdp7y5HL9Wfs";
 
             // Act
-            var expirationDate = _jwtDecoder.GetExpirationDate(token);
+            var expirationDate = _jwtInspector.GetExpirationDate(token);
 
             // Assert
             Assert.NotNull(expirationDate);
@@ -107,7 +105,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
 
             // Act
-            var issuedAt = _jwtDecoder.GetIssuedAt(token);
+            var issuedAt = _jwtInspector.GetIssuedAt(token);
 
             // Assert
             Assert.NotNull(issuedAt);
@@ -120,7 +118,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzMwOTQxMjYwLCJleHAiOjE3MzA5NDQ4NjAsImp0aSI6InVuaXF1ZS1qd3QtaWQtMTIzNDUifQ.xIqTdUzcxlC3xpXufH0jWh7ZZV4X2_yxD1KXvQZ-a4o";
 
             // Act
-            var jwtId = _jwtDecoder.GetJwtId(token);
+            var jwtId = _jwtInspector.GetJwtId(token);
 
             // Assert
             Assert.NotEmpty(jwtId);
@@ -133,7 +131,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
 
             // Act
-            var signingAlgorithm = _jwtDecoder.GetSigningAlgorithm(token);
+            var signingAlgorithm = _jwtInspector.GetSigningAlgorithm(token);
 
             // Assert
             Assert.Equal("HS256", signingAlgorithm);
@@ -146,7 +144,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgInJvbGUiOiAidXNlciIsICJpYXQiOiAiMTY4NzI3MTI5NiJ9.kG3A1qk2J4tqjX2iQ3gg-E1hZdxW9-L_vtgdGsTdmDw";
 
             // Act
-            var isExpired = _jwtDecoder.IsExpired(token);
+            var isExpired = _jwtInspector.IsExpired(token);
 
             // Assert
             Assert.True(isExpired);
@@ -159,7 +157,7 @@ namespace OpenJwtInspector.Tests
             string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
 
             // Act
-            var isValid = _jwtDecoder.IsValidFormat(token);
+            var isValid = _jwtInspector.IsValidFormat(token);
 
             // Assert
             Assert.True(isValid);
@@ -190,7 +188,7 @@ namespace OpenJwtInspector.Tests
             var tokenString = tokenHandler.WriteToken(token);
 
             // Act
-            var isValid = _jwtValidator.ValidateToken(tokenString, secretKey);
+            var isValid = _jwtInspector.ValidateToken(tokenString, secretKey);
 
             // Assert
             Assert.True(isValid, "The token should be valid when using the correct secret key.");
