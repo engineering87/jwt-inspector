@@ -21,16 +21,16 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore src/OpenJwtInspector/OpenJwtInspector.csproj
+      run: dotnet restore src/JwtInspector/JwtInspector.csproj
       
     - name: Restore dependencies for Test Project
-      run: dotnet restore src/OpenJwtInspector.Tests/OpenJwtInspector.Tests.csproj
+      run: dotnet restore src/JwtInspector.Tests/JwtInspector.Tests.csproj
       
     - name: Build
-      run: dotnet build src/OpenJwtInspector/OpenJwtInspector.csproj --no-restore
+      run: dotnet build src/JwtInspector/JwtInspector.csproj --no-restore
       
     - name: Build Test Project
-      run: dotnet build src/OpenJwtInspector.Tests/OpenJwtInspector.Tests.csproj --no-restore
+      run: dotnet build src/JwtInspector.Tests/JwtInspector.Tests.csproj --no-restore
       
     - name: Test
-      run: dotnet test src/OpenJwtInspector.Tests/OpenJwtInspector.Tests.csproj --no-build --verbosity normal
+      run: dotnet test src/JwtInspector.Tests/JwtInspector.Tests.csproj --no-build --verbosity normal
