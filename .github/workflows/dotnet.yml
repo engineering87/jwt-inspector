@@ -21,13 +21,13 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore src/JwtInspector/JwtInspector.csproj
+      run: dotnet restore src/JwtInspector/JwtInspector.Core.csproj
       
     - name: Restore dependencies for Test Project
       run: dotnet restore src/JwtInspector.Tests/JwtInspector.Tests.csproj
       
     - name: Build
-      run: dotnet build src/JwtInspector/JwtInspector.csproj --no-restore
+      run: dotnet build src/JwtInspector/JwtInspector.Core.csproj --no-restore
       
     - name: Build Test Project
       run: dotnet build src/JwtInspector.Tests/JwtInspector.Tests.csproj --no-restore
