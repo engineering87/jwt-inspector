@@ -14,6 +14,7 @@ namespace OpenJwtInspector.Interfaces
         /// <returns>A dictionary containing the payload claims.</returns>
         Dictionary<string, object> DecodePayload(string token);
 
+
         /// <summary>
         /// Decodes the payload of a JWT token and returns it in JSON format.
         /// </summary>
@@ -55,5 +56,40 @@ namespace OpenJwtInspector.Interfaces
         /// <param name="token">The JWT token to extract the parts from.</param>
         /// <returns>A tuple containing the header, payload, and signature of the token.</returns>
         (string Header, string Payload, string Signature) ExtractJwtParts(string token);
+
+        /// <summary>
+        /// Retrieves the issued-at timestamp from the JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token to decode.</param>
+        /// <returns>The issued-at timestamp of the token, or null if not available.</returns>
+        DateTime? GetIssuedAt(string token);
+
+        /// <summary>
+        /// Checks if the JWT token is expired.
+        /// </summary>
+        /// <param name="token">The JWT token to check.</param>
+        /// <returns>True if the token is expired, false otherwise.</returns>
+        bool IsExpired(string token);
+
+        /// <summary>
+        /// Retrieves the JWT ID (jti) claim from the JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token to decode.</param>
+        /// <returns>The JWT ID if present, or null otherwise.</returns>
+        string GetJwtId(string token);
+
+        /// <summary>
+        /// Retrieves the signing algorithm used in the JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token to decode.</param>
+        /// <returns>The algorithm used for signing the token.</returns>
+        string GetSigningAlgorithm(string token);
+
+        /// <summary>
+        /// Checks if the token has a valid JWT format.
+        /// </summary>
+        /// <param name="token">The JWT token to validate.</param>
+        /// <returns>True if the token has a valid JWT format, false otherwise.</returns>
+        bool IsValidFormat(string token);
     }
 }

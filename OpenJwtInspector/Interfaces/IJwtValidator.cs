@@ -1,5 +1,6 @@
 ﻿// (c) 2022 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+
 namespace OpenJwtInspector.Interfaces
 {
     /// <summary>
@@ -46,5 +47,6 @@ namespace OpenJwtInspector.Interfaces
         /// <param name="expectedAlgorithm">The expected signing algorithm.</param>
         /// <returns>True if the token uses the expected algorithm, false otherwise.</returns>
         bool ValidateAlgorithm(string token, string expectedAlgorithm);
+        DateTime? GetExpirationDate(string token);
     }
 }
