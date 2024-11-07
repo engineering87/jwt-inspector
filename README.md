@@ -147,7 +147,7 @@ A valid JWT token consists of three parts:
 - **Payload**: Contains the claims, which can be public, private, or registered claims such as `sub`, `iat`, `exp`, `aud`.
 - **Signature**: A cryptographic signature used to verify the integrity of the token.
 
-A JWT token is typically represented in the following format: header.payload.signature
+A JWT token is typically represented in the following format: `header.payload.signature`
 
 ## Example JWT
 
