@@ -1,9 +1,11 @@
 # JwtInspector - A Library for Decoding and Validating JWT Tokens
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![issues - open-jwt-inspector](https://img.shields.io/github/issues/engineering87/open-jwt-inspector)](https://github.com/engineering87/open-jwt-inspector/issues)
-[![Build](https://github.com/engineering87/open-jwt-inspector/actions/workflows/dotnet.yml/badge.svg)](https://github.com/engineering87/open-jwt-inspector/actions/workflows/dotnet.yml)
-[![stars - open-jwt-inspector](https://img.shields.io/github/stars/engineering87/open-jwt-inspector?style=social)](https://github.com/open-jwt-inspector/RESTSchemaRetry)
+[![issues - jwt-inspector](https://img.shields.io/github/issues/engineering87/jwt-inspector)](https://github.com/engineering87/jwt-inspector/issues)
+[![Nuget](https://img.shields.io/nuget/v/JwtInspector.Core?style=plastic)](https://www.nuget.org/packages/JwtInspector.Core)
+![NuGet Downloads](https://img.shields.io/nuget/dt/JwtInspector.Core)
+[![Build](https://github.com/engineering87/jwt-inspector/actions/workflows/dotnet.yml/badge.svg)](https://github.com/engineering87/jwt-inspector/actions/workflows/dotnet.yml)
+[![stars - jwt-inspector](https://img.shields.io/github/stars/engineering87/jwt-inspector?style=social)](https://github.com/engineering87/jwt-inspector)
 
 JwtInspector is a C# library that provides utilities for decoding, validating, and inspecting JWT (JSON Web Tokens). This library simplifies working with JWTs by providing easy-to-use methods for extracting data, validating tokens, and more. 
 
