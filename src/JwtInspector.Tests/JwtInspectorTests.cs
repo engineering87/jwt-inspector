@@ -1,5 +1,5 @@
-﻿// (c) 2022 Francesco Del Re <francesco.delre.87@gmail.com>
-// This code is licensed under MIT license (see LICENSE.txt for details)using Microsoft.IdentityModel.Tokens;
+﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
+// This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;

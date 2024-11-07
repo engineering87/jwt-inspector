@@ -7,9 +7,20 @@
     <Title>Effortlessly decode, inspect, and validate JWTs</Title>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <Description>Effortlessly decode, inspect, and validate JWTs</Description>
+    <PackageProjectUrl>https://github.com/engineering87/jwt-inspector</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/engineering87/jwt-inspector</RepositoryUrl>
+    <Company>Francesco Del Re</Company>
+    <Authors>Francesco Del Re</Authors>
+    <Copyright>(c) 2024 Francesco Del Re &lt;francesco.delre.87@gmail.com&gt;</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
