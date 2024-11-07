@@ -33,20 +33,145 @@ namespace OpenJwtInspector.Tests
         }
 
         [Fact]
+        public void DecodeBase64Url_ShouldReturnDecodedString_ForValidBase64Url()
+        {
+            // Arrange
+            string input = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9";
+
+            // Act
+            var decodedString = _jwtDecoder.DecodeBase64Url(input);
+
+            // Assert
+            Assert.Equal("{\"alg\": \"HS256\", \"typ\": \"JWT\"}", decodedString);
+        }
+
+        [Fact]
+        public void ExtractJwtParts_ShouldReturnCorrectParts_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var (header, payload, signature) = _jwtDecoder.ExtractJwtParts(token);
+
+            // Assert
+            Assert.NotNull(header);
+            Assert.NotNull(payload);
+            Assert.NotNull(signature);
+        }
+
+        [Fact]
+        public void GetAudience_ShouldReturnCorrectAudience_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var audience = _jwtDecoder.GetAudience(token);
+
+            // Assert
+            Assert.Equal("", audience);
+        }
+
+        [Fact]
+        public void GetClaims_ShouldReturnClaims_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var claims = _jwtDecoder.GetClaims(token);
+
+            // Assert
+            Assert.Contains("sub", claims.Keys);
+            Assert.Contains("name", claims.Keys);
+        }
+
+        [Fact]
+        public void GetExpirationDate_ShouldReturnExpiration_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzMwOTQxMjYwLCJleHAiOjE3MzA5NDQ4NjAsImp0aSI6InVuaXF1ZS1qd3QtaWQtMTIzNDUifQ.2pMlyxG2GFLsVTV3w8rKkIQyFq5qNG3hdp7y5HL9Wfs";
+
+            // Act
+            var expirationDate = _jwtDecoder.GetExpirationDate(token);
+
+            // Assert
+            Assert.NotNull(expirationDate);
+        }
+
+        [Fact]
+        public void GetIssuedAt_ShouldReturnIssuedAt_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var issuedAt = _jwtDecoder.GetIssuedAt(token);
+
+            // Assert
+            Assert.NotNull(issuedAt);
+        }
+
+        [Fact]
+        public void GetJwtId_ShouldReturnJwtId_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNzMwOTQxMjYwLCJleHAiOjE3MzA5NDQ4NjAsImp0aSI6InVuaXF1ZS1qd3QtaWQtMTIzNDUifQ.xIqTdUzcxlC3xpXufH0jWh7ZZV4X2_yxD1KXvQZ-a4o";
+
+            // Act
+            var jwtId = _jwtDecoder.GetJwtId(token);
+
+            // Assert
+            Assert.NotEmpty(jwtId);
+        }
+
+        [Fact]
+        public void GetSigningAlgorithm_ShouldReturnAlgorithm_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var signingAlgorithm = _jwtDecoder.GetSigningAlgorithm(token);
+
+            // Assert
+            Assert.Equal("HS256", signingAlgorithm);
+        }
+
+        [Fact]
+        public void IsExpired_ShouldReturnTrue_ForExpiredToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgInJvbGUiOiAidXNlciIsICJpYXQiOiAiMTY4NzI3MTI5NiJ9.kG3A1qk2J4tqjX2iQ3gg-E1hZdxW9-L_vtgdGsTdmDw";
+
+            // Act
+            var isExpired = _jwtDecoder.IsExpired(token);
+
+            // Assert
+            Assert.True(isExpired);
+        }
+
+        [Fact]
+        public void IsValidFormat_ShouldReturnTrue_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var isValid = _jwtDecoder.IsValidFormat(token);
+
+            // Assert
+            Assert.True(isValid);
+        }
+
+        [Fact]
         public void ValidateToken_ShouldReturnTrue_ForValidToken()
         {
-            string secretKey = "my_secret_key_12345";
-
-            // Convert the secret key string to a byte array
-            byte[] keyBytes = Encoding.ASCII.GetBytes(secretKey);
-
-            // If the key is shorter than 256 bits, pad it to 256 bits (32 bytes)
-            byte[] key256Bits = new byte[32];
-            Array.Copy(keyBytes, key256Bits, Math.Min(keyBytes.Length, 32));
-
-            // Step 2: Generate a valid JWT token for testing using the corrected key size
+            // Arrange
+            string secretKey = "my_secret_key_123456789123456789"; // 32 bits
             var tokenHandler = new JwtSecurityTokenHandler();
-            var signingKey = new SymmetricSecurityKey(key256Bits); // Use the padded key
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -60,16 +185,14 @@ namespace OpenJwtInspector.Tests
                 SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var encondedSecretKey = Encoding.UTF8.GetString(keyBytes);
             var token = tokenHandler.CreateJwtSecurityToken(tokenDescriptor);
-            token.Header.Add("kid", encondedSecretKey);
 
             var tokenString = tokenHandler.WriteToken(token);
 
-            // Step 3: Use JwtValidator to validate the token
-            var isValid = _jwtValidator.ValidateToken(tokenString, encondedSecretKey);
+            // Act
+            var isValid = _jwtValidator.ValidateToken(tokenString, secretKey);
 
-            // Step 4: Assert that the token is valid
+            // Assert
             Assert.True(isValid, "The token should be valid when using the correct secret key.");
         }
     }

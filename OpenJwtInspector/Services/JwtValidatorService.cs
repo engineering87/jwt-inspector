@@ -21,16 +21,26 @@ namespace OpenJwtInspector.Services
 
             try
             {
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
+                };
+
+                tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
 
                 return validatedToken != null;
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                throw new JwtInspectorException("The token has expired.");
+            }
+            catch (SecurityTokenException ex)
+            {
+                throw new JwtInspectorException("Invalid JWT token.", ex);
             }
             catch (Exception ex)
             {
