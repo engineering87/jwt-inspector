@@ -13,6 +13,8 @@ namespace JwtInspector.Core.Services
     /// </summary>
     public class JwtDecoderService : IJwtDecoder
     {
+        private static readonly JwtSecurityTokenHandler _tokenHandler = new JwtSecurityTokenHandler();
+
         /// <inheritdoc />
         public string DecodeBase64Url(string input)
         {
@@ -38,8 +40,7 @@ namespace JwtInspector.Core.Services
 
             try
             {
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
 
                 var payload = new Dictionary<string, object>();
                 foreach (var claim in jwtToken.Claims)
@@ -101,7 +102,7 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
                 return jwtToken.Audiences.FirstOrDefault() ?? string.Empty;
             }
             catch (Exception ex)
@@ -116,7 +117,7 @@ namespace JwtInspector.Core.Services
             try
             {
                 var claims = new Dictionary<string, object>();
-                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
 
                 foreach (var claim in jwtToken.Claims)
                 {
@@ -150,7 +151,7 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
                 return jwtToken.IssuedAt != DateTime.MinValue ? jwtToken.IssuedAt : null;
             }
             catch (Exception ex)
@@ -164,7 +165,7 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
                 return jwtToken.Id;
             }
             catch (Exception ex)
@@ -178,7 +179,7 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
                 return jwtToken.Header.Alg;
             }
             catch (Exception ex)
@@ -192,7 +193,7 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
                 return jwtToken.ValidTo <= DateTime.UtcNow;
             }
             catch (Exception ex)

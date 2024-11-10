@@ -46,5 +46,28 @@ namespace JwtInspector.Core.Interfaces
         /// <param name="expectedAlgorithm">The expected signing algorithm.</param>
         /// <returns>True if the token uses the expected algorithm, false otherwise.</returns>
         bool ValidateAlgorithm(string token, string expectedAlgorithm);
+
+        /// <summary>
+        /// Ensures that the token was signed using the correct signing key.
+        /// </summary>
+        /// <param name="token">The JWT token to validate.</param>
+        /// <param name="signingKey">The expected signing key.</param>
+        /// <returns>True if the signing key is valid, otherwise false.</returns>
+        bool ValidateIssuerSigningKey(string token, string signingKey);
+
+        /// <summary>
+        /// Validates specific claims in the token (e.g., roles, permissions).
+        /// </summary>
+        /// <param name="token">The JWT token to validate.</param>
+        /// <param name="requiredClaims">Key-value pairs representing required claims.</param>
+        /// <returns>True if all required claims are present and valid, false otherwise.</returns>
+        bool ValidateClaims(string token, IDictionary<string, string> requiredClaims);
+
+        /// <summary>
+        /// Validates that the token is not used before the specified 'Not Before' time (nbf claim).
+        /// </summary>
+        /// <param name="token">The JWT token to validate.</param>
+        /// <returns>True if the token is valid according to the 'nbf' claim, false otherwise.</returns>
+        bool ValidateNotBefore(string token);
     }
 }

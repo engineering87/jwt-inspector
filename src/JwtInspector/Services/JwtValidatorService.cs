@@ -13,10 +13,11 @@ namespace JwtInspector.Core.Services
     /// </summary>
     public class JwtValidatorService : IJwtValidator
     {
+        private static readonly JwtSecurityTokenHandler _tokenHandler = new JwtSecurityTokenHandler();
+
         /// <inheritdoc />
         public bool ValidateToken(string token, string secretKey)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(secretKey);
 
             try
@@ -30,7 +31,7 @@ namespace JwtInspector.Core.Services
                     ClockSkew = TimeSpan.Zero
                 };
 
-                tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+                _tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
 
                 return validatedToken != null;
             }
@@ -49,31 +50,23 @@ namespace JwtInspector.Core.Services
         }
 
         /// <inheritdoc />
-        public DateTime? GetExpirationDate(string token)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-
-            return jwtToken.ValidTo == DateTime.MinValue ? null : jwtToken.ValidTo;
-        }
-
-        /// <inheritdoc />
         public bool VerifyIssuer(string token, string expectedIssuer)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
+            var jwtToken = _tokenHandler.ReadJwtToken(token);
 
-            return jwtToken.Issuer == expectedIssuer;
+            return string.Equals(
+                jwtToken.Issuer?.Trim(),
+                expectedIssuer?.Trim(),
+                StringComparison.OrdinalIgnoreCase
+            );
         }
 
         /// <inheritdoc />
         public bool ValidateIssuerAndAudience(string token, string expectedIssuer, string expectedAudience)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-
             try
             {
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                _tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
@@ -94,8 +87,7 @@ namespace JwtInspector.Core.Services
         /// <inheritdoc />
         public bool ValidateLifetime(string token)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
+            var jwtToken = _tokenHandler.ReadJwtToken(token);
 
             return jwtToken.ValidTo > DateTime.UtcNow;
         }
@@ -103,8 +95,7 @@ namespace JwtInspector.Core.Services
         /// <inheritdoc />
         public bool ValidateAlgorithm(string token, string expectedAlgorithm)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
+            var jwtToken = _tokenHandler.ReadJwtToken(token);
 
             var supportedAlgorithms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -131,6 +122,53 @@ namespace JwtInspector.Core.Services
 
             return supportedAlgorithms.TryGetValue(expectedAlgorithm, out var mappedAlgorithm)
                       && string.Equals(jwtToken.Header.Alg, mappedAlgorithm, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <inheritdoc />
+        public bool ValidateIssuerSigningKey(string token, string signingKey)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false
+            };
+
+            try
+            {
+                _tokenHandler.ValidateToken(token, validationParameters, out _);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <inheritdoc />
+        public bool ValidateClaims(string token, IDictionary<string, string> requiredClaims)
+        {
+            var jwtToken = _tokenHandler.ReadJwtToken(token);
+
+            foreach (var claim in requiredClaims)
+            {
+                var tokenClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == claim.Key);
+                if (tokenClaim == null || tokenClaim.Value != claim.Value)
+                    return false;
+            }
+            return true;
+        }
+
+        /// <inheritdoc />
+        public bool ValidateNotBefore(string token)
+        {
+            var jwtToken = _tokenHandler.ReadJwtToken(token);
+
+            return jwtToken.ValidFrom <= DateTime.UtcNow;
         }
     }
 }

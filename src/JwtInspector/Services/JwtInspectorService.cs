@@ -86,14 +86,29 @@ namespace JwtInspector.Core.Services
             return _jwtValidator.ValidateAlgorithm(token, expectedAlgorithm);
         }
 
+        public bool ValidateClaims(string token, IDictionary<string, string> requiredClaims)
+        {
+            return _jwtValidator.ValidateClaims(token, requiredClaims);
+        }
+
         public bool ValidateIssuerAndAudience(string token, string expectedIssuer, string expectedAudience)
         {
             return _jwtValidator.ValidateIssuerAndAudience(token, expectedIssuer, expectedAudience);
         }
 
+        public bool ValidateIssuerSigningKey(string token, string signingKey)
+        {
+            return _jwtValidator.ValidateIssuerSigningKey(token, signingKey);
+        }
+
         public bool ValidateLifetime(string token)
         {
             return _jwtValidator.ValidateLifetime(token);
+        }
+
+        public bool ValidateNotBefore(string token)
+        {
+            return _jwtValidator.ValidateNotBefore(token);
         }
 
         public bool ValidateToken(string token, string secretKey)
