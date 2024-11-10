@@ -16,7 +16,7 @@ The library supports various use cases, such as decoding JWT payloads, validatin
 - Decode JWT tokens to extract claims and payload.
 - Validate JWT token authenticity and expiration.
 - Support for handling `iat` (issued at), `exp` (expiration), and `sub` (subject) claims.
-- Provides a simple API for inspecting JWT headers, payloads, and signatures.
+- Provides a simple interface for inspecting JWT headers, payloads, and signatures.
 - Easy-to-use methods for handling base64 URL encoding and decoding.
 - JWT validation against a symmetric key (HMAC-SHA256) and token verification.
 
@@ -25,7 +25,7 @@ The library supports various use cases, such as decoding JWT payloads, validatin
 You can install the library via the NuGet package manager with the following command:
 
 ```bash
-dotnet add package JwtInspector
+dotnet add package JwtInspector.Core
 ```
 
 ## Usage
@@ -116,7 +116,7 @@ Console.WriteLine($"Is token valid: {isValid}");
 
 ## Methods Overview
 
-### JwtDecoderService
+### Decoding methods
 
 - `DecodeBase64Url(string input)`: Decodes a Base64Url encoded string.
 - `DecodePayload(string token)`: Decodes the payload of a JWT token.
@@ -131,19 +131,23 @@ Console.WriteLine($"Is token valid: {isValid}");
 - `IsExpired(string token)`: Checks if the JWT token is expired.
 - `IsValidFormat(string token)`: Checks if the JWT token has a valid format (three parts separated by dots).
 
-### JwtValidatorService
+### Validation methods
 
-- ValidateToken(string token, string secretKey): Validates the JWT token using the provided secret key for HMAC-SHA256 verification.
+- `ValidateToken(string token, string secretKey)`: Validates the JWT token using the provided secret key for HMAC-SHA256 verification.
+- `VerifyIssuer(string token, string expectedIssuer)`: Verifies that the issuer of the token matches the expected issuer.
+- `ValidateIssuerAndAudience(string token, string expectedIssuer, string expectedAudience)`: Verifies that the issuer and audience of the token match the expected values.
+- `ValidateLifetime(string token)`: Validates the token's lifetime based on the expiration date.
+- `ValidateAlgorithm(string token, string expectedAlgorithm)`: Verifies that the algorithm used to sign the token matches the expected algorithm.
 
 ## JWT Format
 
 A valid JWT token consists of three parts:
 
-- Header: Contains metadata such as the signing algorithm (alg) and token type (typ).
-- Payload: Contains the claims, which can be public, private, or registered claims such as `sub`, `iat`, `exp`, `aud`.
-- Signature: A cryptographic signature used to verify the integrity of the token.
+- **Header**: Contains metadata such as the signing algorithm (`alg`) and token type (`typ`).
+- **Payload**: Contains the claims, which can be public, private, or registered claims such as `sub`, `iat`, `exp`, `aud`.
+- **Signature**: A cryptographic signature used to verify the integrity of the token.
 
-A JWT token is typically represented in the following format: header.payload.signature
+A JWT token is typically represented in the following format: `header.payload.signature`
 
 ## Example JWT
 
@@ -157,7 +161,7 @@ If you'd like to contribute, please fork, fix, commit and send a pull request fo
 
  * [Setting up Git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git)
  * [Fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
- * [Open an issue](https://github.com/engineering87/open-jwt-inspector/issues) if you encounter a bug or have a suggestion for improvements/features
+ * [Open an issue](https://github.com/engineering87/jwt-inspector/issues) if you encounter a bug or have a suggestion for improvements/features
 
 ## Licensee
 JwtInspector source code is available under MIT License, see license in the source.
