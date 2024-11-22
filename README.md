@@ -130,6 +130,11 @@ Console.WriteLine($"Is token valid: {isValid}");
 - `GetSigningAlgorithm(string token)`: Extracts the signing algorithm used in the JWT.
 - `IsExpired(string token)`: Checks if the JWT token is expired.
 - `IsValidFormat(string token)`: Checks if the JWT token has a valid format (three parts separated by dots).
+- `GetIssuer(string token)`: Retrieves the issuer claim from the JWT token.
+- `GetCustomClaim(string token, string claimKey)`: Retrieves a specific custom claim from the JWT token.
+- `IDictionary<string, object> GetAllHeaders(string token)`: Retrieves all headers from the JWT token.
+- `DecodePayloadAs<T>(string token)`: Deserializes the JWT payload into a strongly-typed object.
+- `GetTokenSummary(string token)`: Generates a human-readable summary of the JWT token contents.
 
 ### Validation methods
 
@@ -138,6 +143,9 @@ Console.WriteLine($"Is token valid: {isValid}");
 - `ValidateIssuerAndAudience(string token, string expectedIssuer, string expectedAudience)`: Verifies that the issuer and audience of the token match the expected values.
 - `ValidateLifetime(string token)`: Validates the token's lifetime based on the expiration date.
 - `ValidateAlgorithm(string token, string expectedAlgorithm)`: Verifies that the algorithm used to sign the token matches the expected algorithm.
+- `ValidateIssuerSigningKey(string token, string signingKey)`: Ensures that the token was signed using the correct signing key.
+- `ValidateClaims(string token, IDictionary<string, string> requiredClaims)`: Validates specific claims in the token (e.g., roles, permissions).
+- `ValidateNotBefore(string token)`: Validates that the token is not used before the specified 'Not Before' time (nbf claim).
 
 ## JWT Format
 
