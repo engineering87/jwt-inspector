@@ -61,6 +61,27 @@ namespace JwtInspector.Core.Services
         }
 
         /// <inheritdoc />
+        public T DecodePayloadAs<T>(string token) where T : class
+        {
+            try
+            {
+                string payloadJson = DecodePayloadAsJson(token);
+                return JsonSerializer.Deserialize<T>(payloadJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? throw new JwtInspectorException("Failed to deserialize payload as the specified type.");
+            }
+            catch (JsonException ex)
+            {
+                throw new JwtInspectorException("Failed to deserialize the payload to the specified type.", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new JwtInspectorException("An error occurred while decoding the payload.", ex);
+            }
+        }
+
+        /// <inheritdoc />
         public string DecodePayloadAsJson(string token)
         {
             try
@@ -94,6 +115,27 @@ namespace JwtInspector.Core.Services
             catch (Exception ex)
             {
                 throw new JwtInspectorException("Failed to extract and decode JWT parts.", ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public IDictionary<string, object> GetAllHeaders(string token)
+        {
+            try
+            {
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
+                var headers = new Dictionary<string, object>();
+
+                foreach (var header in jwtToken.Header)
+                {
+                    headers[header.Key] = header.Value;
+                }
+
+                return headers;
+            }
+            catch (Exception ex)
+            {
+                throw new JwtInspectorException("Failed to retrieve headers from the JWT token.", ex);
             }
         }
 
@@ -133,6 +175,20 @@ namespace JwtInspector.Core.Services
         }
 
         /// <inheritdoc />
+        public object GetCustomClaim(string token, string claimKey)
+        {
+            try
+            {
+                var claims = GetClaims(token);
+                return claims.TryGetValue(claimKey, out var claimValue) ? claimValue : null;
+            }
+            catch (Exception ex)
+            {
+                throw new JwtInspectorException($"Failed to retrieve the custom claim '{claimKey}' from the JWT token.", ex);
+            }
+        }
+
+        /// <inheritdoc />
         public DateTime? GetExpirationDate(string token)
         {
             try
@@ -161,6 +217,21 @@ namespace JwtInspector.Core.Services
         }
 
         /// <inheritdoc />
+        public string GetIssuer(string token)
+        {
+            try
+            {
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
+                return jwtToken.Issuer ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                throw new JwtInspectorException("Failed to retrieve the issuer from the JWT token.", ex);
+            }
+        }
+
+
+        /// <inheritdoc />
         public string GetJwtId(string token)
         {
             try
@@ -185,6 +256,39 @@ namespace JwtInspector.Core.Services
             catch (Exception ex)
             {
                 throw new JwtInspectorException("Failed to retrieve the signing algorithm from the JWT token.", ex);
+            }
+        }
+
+        /// <inheritdoc />
+        public string GetTokenSummary(string token)
+        {
+            try
+            {
+                var (header, payload, signature) = ExtractJwtParts(token);
+                var headerData = JsonSerializer.Deserialize<Dictionary<string, object>>(header);
+                var payloadData = JsonSerializer.Deserialize<Dictionary<string, object>>(payload);
+
+                if (headerData == null || payloadData == null)
+                {
+                    throw new JwtInspectorException("Failed to parse header or payload.");
+                }
+
+                var summary = new
+                {
+                    Header = headerData,
+                    Payload = payloadData,
+                    Signature = signature
+                };
+
+                return JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true });
+            }
+            catch (JsonException ex)
+            {
+                throw new JwtInspectorException("Failed to parse header or payload as JSON.", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new JwtInspectorException("Failed to generate the JWT summary.", ex);
             }
         }
 

@@ -91,5 +91,42 @@ namespace JwtInspector.Core.Interfaces
         /// <param name="token">The JWT token to validate.</param>
         /// <returns>True if the token has a valid JWT format, false otherwise.</returns>
         bool IsValidFormat(string token);
+
+        /// <summary>
+        /// Retrieves the issuer claim from the JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token to decode.</param>
+        /// <returns>The issuer claim value, or null if not available.</returns>
+        string GetIssuer(string token);
+
+        /// <summary>
+        /// Retrieves a specific custom claim from the JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token to decode.</param>
+        /// <param name="claimKey">The key of the claim to retrieve.</param>
+        /// <returns>The value of the custom claim, or null if not available.</returns>
+        object GetCustomClaim(string token, string claimKey);
+
+        /// <summary>
+        /// Retrieves all headers from the JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token to decode.</param>
+        /// <returns>A dictionary containing all headers in the token.</returns>
+        IDictionary<string, object> GetAllHeaders(string token);
+
+        /// <summary>
+        /// Deserializes the JWT payload into a strongly-typed object.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to deserialize into.</typeparam>
+        /// <param name="token">The JWT token to decode.</param>
+        /// <returns>An instance of the specified type populated with the payload data.</returns>
+        T DecodePayloadAs<T>(string token) where T : class;
+
+        /// <summary>
+        /// Generates a human-readable summary of the JWT token contents.
+        /// </summary>
+        /// <param name="token">The JWT token to analyze.</param>
+        /// <returns>A formatted string summarizing the header, payload, and other details of the token.</returns>
+        string GetTokenSummary(string token);
     }
 }

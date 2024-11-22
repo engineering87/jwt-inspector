@@ -31,6 +31,11 @@ namespace JwtInspector.Core.Services
             return _jwtDecoder.DecodePayload(token);
         }
 
+        public T DecodePayloadAs<T>(string token) where T : class
+        {
+            return _jwtDecoder.DecodePayloadAs<T>(token);
+        }
+
         public string DecodePayloadAsJson(string token)
         {
             return _jwtDecoder.DecodePayloadAsJson(token);
@@ -39,6 +44,11 @@ namespace JwtInspector.Core.Services
         public (string Header, string Payload, string Signature) ExtractJwtParts(string token)
         {
             return _jwtDecoder.ExtractJwtParts(token);
+        }
+
+        public IDictionary<string, object> GetAllHeaders(string token)
+        {
+            return _jwtDecoder.GetAllHeaders(token);
         }
 
         public string GetAudience(string token)
@@ -51,6 +61,11 @@ namespace JwtInspector.Core.Services
             return _jwtDecoder.GetClaims(token);
         }
 
+        public object GetCustomClaim(string token, string claimKey)
+        {
+            return _jwtDecoder.GetCustomClaim(token, claimKey);
+        }
+
         public DateTime? GetExpirationDate(string token)
         {
             return _jwtDecoder.GetExpirationDate(token);
@@ -61,6 +76,11 @@ namespace JwtInspector.Core.Services
             return _jwtDecoder.GetIssuedAt(token);
         }
 
+        public string GetIssuer(string token)
+        {
+            return _jwtDecoder.GetIssuer(token);
+        }
+
         public string GetJwtId(string token)
         {
             return _jwtDecoder.GetJwtId(token);
@@ -69,6 +89,11 @@ namespace JwtInspector.Core.Services
         public string GetSigningAlgorithm(string token)
         {
             return _jwtDecoder.GetSigningAlgorithm(token);
+        }
+
+        public string GetTokenSummary(string token)
+        {
+            return _jwtDecoder.GetTokenSummary(token);
         }
 
         public bool IsExpired(string token)

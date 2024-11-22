@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using JwtInspector.Core.Interfaces;
 using JwtInspector.Core.Services;
+using JwtInspector.Core.Exceptions;
 
 namespace JwtInspector.Tests
 {
@@ -193,5 +194,32 @@ namespace JwtInspector.Tests
             // Assert
             Assert.True(isValid, "The token should be valid when using the correct secret key.");
         }
+
+        [Fact]
+        public void GetTokenSummary_ShouldReturnFormattedJson_ForValidToken()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var summary = _jwtInspector.GetTokenSummary(token);
+
+            // Assert
+            Assert.NotEmpty(summary);
+            Assert.Contains("\"Header\":", summary);
+            Assert.Contains("\"Payload\":", summary);
+            Assert.Contains("\"Signature\":", summary);
+        }
+
+        [Fact]
+        public void ExtractJwtParts_ShouldThrowException_ForMalformedToken()
+        {
+            // Arrange
+            string malformedToken = "MalformedTokenWithoutThreeParts";
+
+            // Act & Assert
+            Assert.Throws<JwtInspectorException>(() => _jwtInspector.ExtractJwtParts(malformedToken));
+        }
+
     }
 }
