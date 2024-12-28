@@ -20,5 +20,5 @@ jobs:
         shell: bash
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/setup-node@v4.1.0
-      - run: npm install @commitlint/cli
+      - run: npm install @commitlint/cli @commitlint/config-conventional --save-dev
       - run: npx commitlint --from HEAD~${{ github.event.pull_request.commits || 1 }} --to HEAD
