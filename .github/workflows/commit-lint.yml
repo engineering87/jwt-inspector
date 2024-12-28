@@ -2,9 +2,11 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
     branches:
       - main
+      - develop
 name: Lint commits
 jobs:
   lint-commits:
@@ -18,6 +20,5 @@ jobs:
         shell: bash
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/setup-node@v4.1.0
-      - run: npm install conventional-changelog
       - run: npm install @commitlint/cli
-      - run: npx commitlint --from HEAD~${{ github.event.pull_request.commits }} --to HEAD
+      - run: npx commitlint --from HEAD~${{ github.event.pull_request.commits || 1 }} --to HEAD
