@@ -319,6 +319,20 @@ namespace JwtInspector.Core.Services
                 throw new JwtInspectorException("Failed to verify the JWT token format.", ex);
             }
         }
+
+        /// <inheritdoc />
+        public bool HasClaim(string token, string claimKey)
+        {
+            try
+            {
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
+                return jwtToken.Claims.Any(claim => claim.Type.Equals(claimKey, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (Exception ex)
+            {
+                throw new JwtInspectorException($"Failed to check existence of claim '{claimKey}' in the JWT token.", ex);
+            }
+        }
     }
 }
 

@@ -96,6 +96,11 @@ namespace JwtInspector.Core.Services
             return _jwtDecoder.GetTokenSummary(token);
         }
 
+        public bool HasClaim(string token, string claimKey)
+        {
+            return _jwtDecoder.HasClaim(token, claimKey);
+        }
+
         public bool IsExpired(string token)
         {
             return _jwtDecoder.IsExpired(token);

@@ -128,5 +128,14 @@ namespace JwtInspector.Core.Interfaces
         /// <param name="token">The JWT token to analyze.</param>
         /// <returns>A formatted string summarizing the header, payload, and other details of the token.</returns>
         string GetTokenSummary(string token);
+
+        /// <summary>
+        /// Checks if the JWT token contains a specific claim.
+        /// </summary>
+        /// <param name="token">The JWT token to inspect.</param>
+        /// <param name="claimKey">The key of the claim to check.</param>
+        /// <returns>True if the claim exists, false otherwise.</returns>
+        bool HasClaim(string token, string claimKey);
+
     }
 }
