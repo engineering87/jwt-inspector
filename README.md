@@ -13,12 +13,20 @@ The library supports various use cases, such as decoding JWT payloads, validatin
 
 ## Features
 
-- Decode JWT tokens to extract claims and payload.
-- Validate JWT token authenticity and expiration.
-- Support for handling `iat` (issued at), `exp` (expiration), and `sub` (subject) claims.
-- Provides a simple interface for inspecting JWT headers, payloads, and signatures.
-- Easy-to-use methods for handling base64 URL encoding and decoding.
-- JWT validation against a symmetric key (HMAC-SHA256) and token verification.
+- Decode JWT tokens to extract headers, claims, and payload.
+- Validate JWT authenticity, algorithm, and expiration.
+- Support for handling standard claims:  
+  - `iat` (issued at)  
+  - `exp` (expiration)  
+  - `nbf` (not before)  
+  - `sub` (subject)  
+  - `jti` (JWT ID)  
+- Provides a unified interface for inspecting JWT headers, payloads, and signature presence.
+- Easy-to-use helpers for Base64Url encoding/decoding.
+- Safe and consistent return values (`string.Empty` instead of `null` for missing claims).
+- Built-in validation methods for issuer, audience, claims, algorithm, signing key, and token lifetime.
+- Strongly-typed deserialization of payload into custom objects.
+- JSON summary of token contents for debugging and inspection.
 
 ## Installation
 
@@ -116,36 +124,34 @@ Console.WriteLine($"Is token valid: {isValid}");
 
 ## Methods Overview
 
-### Decoding methods
+### 🔎 Decoding Methods
+- **DecodeBase64Url(string input)** → Decodes a Base64Url encoded string into plain text.  
+- **DecodePayload(string token)** → Decodes the raw payload of a JWT without deserialization.  
+- **DecodePayloadAsJson(string token)** → Returns the decoded JWT payload as a JSON string.  
+- **DecodePayloadAs<T>(string token)** → Deserializes the JWT payload into a strongly typed object.  
+- **ExtractJwtParts(string token)** → Splits the JWT into header, payload, and signature parts.  
+- **GetAudience(string token)** → Retrieves the audience (`aud`) claim, returns `string.Empty` if not available.  
+- **GetIssuer(string token)** → Retrieves the issuer (`iss`) claim, returns `string.Empty` if not available.  
+- **GetJwtId(string token)** → Retrieves the JWT ID (`jti`) claim, returns `string.Empty` if not available.  
+- **GetClaims(string token)** → Extracts all claims as a dictionary from the JWT payload.  
+- **GetAllHeaders(string token)** → Retrieves all header values as a dictionary.  
+- **GetExpirationDate(string token)** → Extracts the expiration (`exp`) as a `DateTime?`.  
+- **GetIssuedAt(string token)** → Extracts the issued-at (`iat`) as a `DateTime?`.  
+- **GetSigningAlgorithm(string token)** → Returns the signing algorithm (`alg`) defined in the JWT header.  
+- **GetCustomClaim(string token, string claimKey)** → Returns a specific custom claim value by key.  
+- **GetTokenSummary(string token)** → Builds a formatted JSON summary with header, payload, and signature presence.  
+- **IsValidFormat(string token)** → Checks whether the JWT structure has three parts separated by dots.  
+- **IsExpired(string token)** → Checks whether the JWT is expired based on the `exp` claim.  
 
-- `DecodeBase64Url(string input)`: Decodes a Base64Url encoded string.
-- `DecodePayload(string token)`: Decodes the payload of a JWT token.
-- `DecodePayloadAsJson(string token)`: Returns the decoded JWT payload as a JSON string.
-- `ExtractJwtParts(string token)`: Extracts the header, payload, and signature from a JWT token.
-- `GetAudience(string token)`: Extracts the audience (`aud`) from the JWT token.
-- `GetClaims(string token)`: Extracts all claims from the JWT token.
-- `GetExpirationDate(string token)`: Extracts the expiration date (`exp`) of the JWT token.
-- `GetIssuedAt(string token)`: Extracts the issued date (`iat`) of the JWT token.
-- `GetJwtId(string token)`: Extracts the JWT ID (`jti`) of the JWT token.
-- `GetSigningAlgorithm(string token)`: Extracts the signing algorithm used in the JWT.
-- `IsExpired(string token)`: Checks if the JWT token is expired.
-- `IsValidFormat(string token)`: Checks if the JWT token has a valid format (three parts separated by dots).
-- `GetIssuer(string token)`: Retrieves the issuer claim from the JWT token.
-- `GetCustomClaim(string token, string claimKey)`: Retrieves a specific custom claim from the JWT token.
-- `IDictionary<string, object> GetAllHeaders(string token)`: Retrieves all headers from the JWT token.
-- `DecodePayloadAs<T>(string token)`: Deserializes the JWT payload into a strongly-typed object.
-- `GetTokenSummary(string token)`: Generates a human-readable summary of the JWT token contents.
-
-### Validation methods
-
-- `ValidateToken(string token, string secretKey)`: Validates the JWT token using the provided secret key for HMAC-SHA256 verification.
-- `VerifyIssuer(string token, string expectedIssuer)`: Verifies that the issuer of the token matches the expected issuer.
-- `ValidateIssuerAndAudience(string token, string expectedIssuer, string expectedAudience)`: Verifies that the issuer and audience of the token match the expected values.
-- `ValidateLifetime(string token)`: Validates the token's lifetime based on the expiration date.
-- `ValidateAlgorithm(string token, string expectedAlgorithm)`: Verifies that the algorithm used to sign the token matches the expected algorithm.
-- `ValidateIssuerSigningKey(string token, string signingKey)`: Ensures that the token was signed using the correct signing key.
-- `ValidateClaims(string token, IDictionary<string, string> requiredClaims)`: Validates specific claims in the token (e.g., roles, permissions).
-- `ValidateNotBefore(string token)`: Validates that the token is not used before the specified 'Not Before' time (nbf claim).
+### ✅ Validation Methods
+- **ValidateToken(string token, string secretKey)** → Validates token signature and expiration using an HMAC-SHA secret key.  
+- **ValidateIssuerAndAudience(string token, string expectedIssuer, string expectedAudience)** → Validates that issuer and audience match the expected values.  
+- **VerifyIssuer(string token, string expectedIssuer)** → Validates that the token was issued by the expected issuer.  
+- **ValidateLifetime(string token)** → Validates the token’s lifetime based on `exp` and `iat`.  
+- **ValidateNotBefore(string token, TimeSpan? clockSkew = null)** → Validates that the token is not used before its `nbf` claim, optionally allowing clock skew.  
+- **ValidateAlgorithm(string token, string expectedAlgorithm)** → Ensures that the JWT is signed with the expected algorithm.  
+- **ValidateIssuerSigningKey(string token, SecurityKey key)** → Validates the token using a specific signing key.  
+- **ValidateClaims(string token, IDictionary<string, string> requiredClaims)** → Ensures that the JWT contains all required claims with matching values.  
 
 ## JWT Format
 
