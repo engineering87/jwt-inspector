@@ -1,7 +1,8 @@
 ﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
-using JwtInspector.Core.Interfaces;
 using JwtInspector.Core.Exceptions;
+using JwtInspector.Core.Interfaces;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
@@ -20,13 +21,12 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                string paddedInput = input.Length % 4 == 0 ? input : input + new string('=', 4 - input.Length % 4);
-                byte[] bytes = Convert.FromBase64String(paddedInput.Replace('-', '+').Replace('_', '/'));
+                var bytes = Base64UrlEncoder.DecodeBytes(input);
                 return Encoding.UTF8.GetString(bytes);
             }
-            catch (FormatException ex)
+            catch (Exception ex)
             {
-                throw new JwtInspectorException("Invalid base64 URL encoding.", ex);
+                throw new JwtInspectorException("Invalid base64url content.", ex);
             }
         }
 
@@ -34,19 +34,14 @@ namespace JwtInspector.Core.Services
         public Dictionary<string, object> DecodePayload(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
-            {
                 throw new JwtInspectorException("Invalid token format. Expected a standard JWT with three base64-encoded sections.");
-            }
 
             try
             {
-                var jwtToken = _tokenHandler.ReadJwtToken(token);
-
-                var payload = new Dictionary<string, object>();
-                foreach (var claim in jwtToken.Claims)
-                {
+                var jwt = _tokenHandler.ReadJwtToken(token);
+                var payload = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                foreach (var claim in jwt.Claims)
                     payload[claim.Type] = claim.Value;
-                }
 
                 return payload;
             }
@@ -65,11 +60,17 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                string payloadJson = DecodePayloadAsJson(token);
-                return JsonSerializer.Deserialize<T>(payloadJson, new JsonSerializerOptions
+                var parts = token.Split('.');
+                if (parts.Length != 3)
+                    throw new JwtInspectorException("Invalid JWT format. Expected three base64url segments.");
+
+                var payloadJson = DecodeBase64Url(parts[1]); // RAW payload JSON
+                var obj = JsonSerializer.Deserialize<T>(payloadJson, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                }) ?? throw new JwtInspectorException("Failed to deserialize payload as the specified type.");
+                });
+
+                return obj ?? throw new JwtInspectorException("Payload does not match the target type.");
             }
             catch (JsonException ex)
             {
@@ -86,8 +87,17 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var payload = DecodePayload(token);
-                return JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true });
+                var parts = token.Split('.');
+                if (parts.Length != 3)
+                    throw new JwtInspectorException("Invalid JWT format. Expected three base64url segments.");
+
+                var payloadJson = DecodeBase64Url(parts[1]); // RAW payload JSON
+                using var doc = JsonDocument.Parse(payloadJson);
+                return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
+            }
+            catch (JsonException ex)
+            {
+                throw new JwtInspectorException("Failed to parse the payload as JSON.", ex);
             }
             catch (Exception ex)
             {
@@ -123,14 +133,10 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var jwtToken = _tokenHandler.ReadJwtToken(token);
-                var headers = new Dictionary<string, object>();
-
-                foreach (var header in jwtToken.Header)
-                {
-                    headers[header.Key] = header.Value;
-                }
-
+                var jwt = _tokenHandler.ReadJwtToken(token);
+                var headers = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kv in jwt.Header)
+                    headers[kv.Key] = kv.Value!;
                 return headers;
             }
             catch (Exception ex)
@@ -158,14 +164,10 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var claims = new Dictionary<string, object>();
-                var jwtToken = _tokenHandler.ReadJwtToken(token);
-
-                foreach (var claim in jwtToken.Claims)
-                {
-                    claims[claim.Type] = claim.Value;
-                }
-
+                var jwt = _tokenHandler.ReadJwtToken(token);
+                var claims = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                foreach (var c in jwt.Claims)
+                    claims[c.Type] = c.Value;
                 return claims;
             }
             catch (Exception ex)
@@ -175,12 +177,12 @@ namespace JwtInspector.Core.Services
         }
 
         /// <inheritdoc />
-        public object GetCustomClaim(string token, string claimKey)
+        public object? GetCustomClaim(string token, string claimKey)
         {
             try
             {
-                var claims = GetClaims(token);
-                return claims.TryGetValue(claimKey, out var claimValue) ? claimValue : null;
+                var claims = GetClaims(token); // case-insensitive dictionary
+                return claims.TryGetValue(claimKey, out var value) ? value : null;
             }
             catch (Exception ex)
             {
@@ -193,7 +195,7 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
                 return jwtToken.ValidTo != DateTime.MinValue ? jwtToken.ValidTo : null;
             }
             catch (Exception ex)
@@ -237,7 +239,7 @@ namespace JwtInspector.Core.Services
             try
             {
                 var jwtToken = _tokenHandler.ReadJwtToken(token);
-                return jwtToken.Id;
+                return jwtToken.Id ?? string.Empty;
             }
             catch (Exception ex)
             {
@@ -251,7 +253,7 @@ namespace JwtInspector.Core.Services
             try
             {
                 var jwtToken = _tokenHandler.ReadJwtToken(token);
-                return jwtToken.Header.Alg;
+                return jwtToken.Header.Alg ?? string.Empty;
             }
             catch (Exception ex)
             {
@@ -262,61 +264,43 @@ namespace JwtInspector.Core.Services
         /// <inheritdoc />
         public string GetTokenSummary(string token)
         {
-            try
-            {
-                var (header, payload, signature) = ExtractJwtParts(token);
-                var headerData = JsonSerializer.Deserialize<Dictionary<string, object>>(header);
-                var payloadData = JsonSerializer.Deserialize<Dictionary<string, object>>(payload);
+            var parts = token.Split('.');
+            if (parts.Length != 3)
+                throw new JwtInspectorException("Invalid JWT format. A JWT token must have three parts separated by dots.");
 
-                if (headerData == null || payloadData == null)
-                {
-                    throw new JwtInspectorException("Failed to parse header or payload.");
-                }
+            var header = DecodeBase64Url(parts[0]);
+            var payload = DecodeBase64Url(parts[1]);
+            var signature = parts[2];
 
-                var summary = new
-                {
-                    Header = headerData,
-                    Payload = payloadData,
-                    Signature = signature
-                };
+            var summary = new
+            {
+                Header = JsonSerializer.Deserialize<Dictionary<string, object>>(header),
+                Payload = JsonSerializer.Deserialize<Dictionary<string, object>>(payload),
+                Signature = signature
+            };
 
-                return JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true });
-            }
-            catch (JsonException ex)
-            {
-                throw new JwtInspectorException("Failed to parse header or payload as JSON.", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new JwtInspectorException("Failed to generate the JWT summary.", ex);
-            }
+            return JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true });
         }
 
         /// <inheritdoc />
-        public bool IsExpired(string token)
+        public bool IsExpired(string token, TimeSpan? clockSkew = null)
         {
-            try
-            {
-                var jwtToken = _tokenHandler.ReadJwtToken(token);
-                return jwtToken.ValidTo <= DateTime.UtcNow;
-            }
-            catch (Exception ex)
-            {
-                throw new JwtInspectorException("Failed to determine if the JWT token is expired.", ex);
-            }
+            var skew = clockSkew ?? TimeSpan.Zero;
+            var jwt = _tokenHandler.ReadJwtToken(token);
+            return jwt.ValidTo <= DateTime.UtcNow.Add(skew);
         }
 
         /// <inheritdoc />
         public bool IsValidFormat(string token)
         {
-            try
-            {
-                var parts = token.Split('.');
-                return parts.Length == 3;
+            try 
+            { 
+                _tokenHandler.ReadJwtToken(token); 
+                return true; 
             }
-            catch (Exception ex)
-            {
-                throw new JwtInspectorException("Failed to verify the JWT token format.", ex);
+            catch 
+            { 
+                return false; 
             }
         }
 

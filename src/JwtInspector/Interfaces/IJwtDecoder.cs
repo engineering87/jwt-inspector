@@ -33,7 +33,7 @@ namespace JwtInspector.Core.Interfaces
         /// Retrieves the audience claim from the JWT token.
         /// </summary>
         /// <param name="token">The JWT token to decode.</param>
-        /// <returns>The audience claim value.</returns>
+        /// <returns>The audience claim value, or an empty string if not available.</returns>
         string GetAudience(string token);
 
         /// <summary>
@@ -68,14 +68,15 @@ namespace JwtInspector.Core.Interfaces
         /// Checks if the JWT token is expired.
         /// </summary>
         /// <param name="token">The JWT token to check.</param>
+        /// <param name="clockSkew">The TimeSpan skew.</param>
         /// <returns>True if the token is expired, false otherwise.</returns>
-        bool IsExpired(string token);
+        bool IsExpired(string token, TimeSpan? clockSkew = null);
 
         /// <summary>
         /// Retrieves the JWT ID (jti) claim from the JWT token.
         /// </summary>
         /// <param name="token">The JWT token to decode.</param>
-        /// <returns>The JWT ID if present, or null otherwise.</returns>
+        /// <returns>The JWT ID if present, or an empty string otherwise.</returns>
         string GetJwtId(string token);
 
         /// <summary>
@@ -96,7 +97,7 @@ namespace JwtInspector.Core.Interfaces
         /// Retrieves the issuer claim from the JWT token.
         /// </summary>
         /// <param name="token">The JWT token to decode.</param>
-        /// <returns>The issuer claim value, or null if not available.</returns>
+        /// <returns>The issuer claim value, or an empty string if not available.</returns>
         string GetIssuer(string token);
 
         /// <summary>
@@ -105,7 +106,7 @@ namespace JwtInspector.Core.Interfaces
         /// <param name="token">The JWT token to decode.</param>
         /// <param name="claimKey">The key of the claim to retrieve.</param>
         /// <returns>The value of the custom claim, or null if not available.</returns>
-        object GetCustomClaim(string token, string claimKey);
+        object? GetCustomClaim(string token, string claimKey);
 
         /// <summary>
         /// Retrieves all headers from the JWT token.
@@ -136,6 +137,5 @@ namespace JwtInspector.Core.Interfaces
         /// <param name="claimKey">The key of the claim to check.</param>
         /// <returns>True if the claim exists, false otherwise.</returns>
         bool HasClaim(string token, string claimKey);
-
     }
 }

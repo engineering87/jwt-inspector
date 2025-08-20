@@ -1,5 +1,7 @@
 ﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
+using Microsoft.IdentityModel.Tokens;
+
 namespace JwtInspector.Core.Interfaces
 {
     /// <summary>
@@ -14,6 +16,13 @@ namespace JwtInspector.Core.Interfaces
         /// <param name="secretKey">The secret key for token signature validation.</param>
         /// <returns>True if the token is valid, otherwise false.</returns>
         bool ValidateToken(string token, string secretKey);
+
+        /// <summary>
+        /// Validates that the token signature matches the provided asymmetric or symmetric <see cref="SecurityKey"/>.  
+        /// This check ignores issuer, audience and lifetime validation, focusing only on the signing key.
+        /// Returns <c>true</c> if the token is valid with the given key; otherwise <c>false</c>.
+        /// </summary>
+        bool ValidateIssuerSigningKey(string token, SecurityKey key);
 
         /// <summary>
         /// Verifies that the issuer of the token matches the expected issuer.
@@ -67,7 +76,11 @@ namespace JwtInspector.Core.Interfaces
         /// Validates that the token is not used before the specified 'Not Before' time (nbf claim).
         /// </summary>
         /// <param name="token">The JWT token to validate.</param>
+        /// <param name="clockSkew">
+        /// Optional clock skew to account for differences between system clocks.  
+        /// If provided, the 'nbf' validation allows for the specified offset.
+        /// </param>
         /// <returns>True if the token is valid according to the 'nbf' claim, false otherwise.</returns>
-        bool ValidateNotBefore(string token);
+        bool ValidateNotBefore(string token, TimeSpan? clockSkew = null);
     }
 }

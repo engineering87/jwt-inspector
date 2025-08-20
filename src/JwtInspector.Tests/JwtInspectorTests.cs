@@ -221,5 +221,375 @@ namespace JwtInspector.Tests
             Assert.Throws<JwtInspectorException>(() => _jwtInspector.ExtractJwtParts(malformedToken));
         }
 
+        // === Additional tests (paste inside JwtInspectorTests class) ===
+
+        #region Algorithm validation
+
+        [Fact]
+        public void ValidateAlgorithm_ShouldRejectNone()
+        {
+            // Arrange: JWT with alg = none (unsigned)
+            var header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
+            var payload = "{\"sub\":\"123\",\"name\":\"John Doe\"}";
+            string token = $"{Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(header))}.{Base64UrlEncoder.Encode(Encoding.UTF8.GetBytes(payload))}.";
+
+            // Act
+            var isValidAlg = _jwtInspector.ValidateAlgorithm(token, "HS256");
+
+            // Assert
+            Assert.False(isValidAlg);
+        }
+
+        [Fact]
+        public void ValidateAlgorithm_ShouldMatchExpected()
+        {
+            // Arrange
+            string secret = "test_secret_1234567890_1234567890";
+            var token = CreateSymmetricJwt(secret, algorithm: SecurityAlgorithms.HmacSha256, expires: DateTime.UtcNow.AddMinutes(10));
+
+            // Act
+            var ok = _jwtInspector.ValidateAlgorithm(token, "HS256");
+
+            // Assert
+            Assert.True(ok);
+        }
+
+        #endregion
+
+        #region Lifetime / Expiration / NotBefore
+
+        [Fact]
+        public void ValidateLifetime_ShouldReturnTrue_ForFutureExp()
+        {
+            // Arrange
+            string secret = "future_exp_secret_1234567890_ABCDEFG";
+            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddMinutes(5)); // valid for 5 minutes
+
+            // Act
+            var ok = _jwtInspector.ValidateLifetime(token);
+
+            // Assert
+            Assert.True(ok);
+        }
+
+        [Fact]
+        public void ValidateLifetime_ShouldReturnFalse_ForPastExp()
+        {
+            // Arrange
+            string secret = "past_exp_secret_1234567890_ABCDEFG";
+            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddMinutes(-1)); // already expired
+
+            // Act
+            var ok = _jwtInspector.ValidateLifetime(token);
+
+            // Assert
+            Assert.False(ok);
+        }
+
+        [Fact]
+        public void ValidateNotBefore_ShouldRespectNbf()
+        {
+            // Arrange
+            string secret = "nbf_secret_1234567890_ABCDEFG";
+            var nbf = DateTime.UtcNow.AddMinutes(2); // not valid for 2 minutes
+            var token = CreateSymmetricJwt(secret, notBefore: nbf, expires: DateTime.UtcNow.AddMinutes(10));
+
+            // Act
+            var okNow = _jwtInspector.ValidateNotBefore(token); // with current time
+
+            // Assert
+            Assert.False(okNow); // not valid yet
+        }
+
+        [Fact]
+        public void IsExpired_ShouldHonorClockSkew()
+        {
+            // Arrange: token that expires in 2 minutes
+            string secret = "skew_secret_1234567890_1234567890_XXXX";
+            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddMinutes(2));
+
+            // Act
+            var expiredNoSkew = _jwtInspector.IsExpired(token); // default skew = null => 0
+            var expiredWithSkew = _jwtInspector.IsExpired(token, TimeSpan.FromMinutes(-5)); // negative skew simulates stricter check (treat earlier)
+
+            // Assert
+            Assert.False(expiredNoSkew);
+            // With negative skew, we effectively compare ValidTo <= UtcNow - 5 min -> should still be false in normal cases,
+            // but this asserts that the API accepts the parameter without throwing.
+            Assert.False(expiredWithSkew);
+        }
+
+        #endregion
+
+        #region Issuer / Audience / ID / Custom Claims
+
+        [Fact]
+        public void GetIssuerAudienceJwtId_ShouldReturnEmpty_WhenMissing()
+        {
+            // Arrange: token without iss/aud/jti
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJuYW1lIjogIkRvZSJ9.sC5aE7x2I2e3r0u1Vg3j1r3cmgH8IeXlZ2l1P2R9J5E";
+
+            // Act
+            var iss = _jwtInspector.GetIssuer(token);
+            var aud = _jwtInspector.GetAudience(token);
+            var jti = _jwtInspector.GetJwtId(token);
+
+            // Assert
+            Assert.Equal(string.Empty, iss);
+            Assert.Equal(string.Empty, aud);
+            Assert.Equal(string.Empty, jti);
+        }
+
+        [Fact]
+        public void GetCustomClaim_ShouldReturnNull_WhenMissing()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJuYW1lIjogIkRvZSJ9.sC5aE7x2I2e3r0u1Vg3j1r3cmgH8IeXlZ2l1P2R9J5E";
+
+            // Act
+            var value = _jwtInspector.GetCustomClaim(token, "non_existing_claim");
+
+            // Assert
+            Assert.Null(value);
+        }
+
+        #endregion
+
+        #region Format / Headers / Claims
+
+        [Fact]
+        public void IsValidFormat_ShouldReturnFalse_ForMalformedToken()
+        {
+            // Arrange
+            string malformed = "only.two.parts.";
+
+            // Act
+            var isValid = _jwtInspector.IsValidFormat(malformed);
+
+            // Assert
+            Assert.False(isValid);
+        }
+
+        [Fact]
+        public void GetAllHeaders_ShouldIncludeAlg()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJuYW1lIjogIkRvZSJ9.sC5aE7x2I2e3r0u1Vg3j1r3cmgH8IeXlZ2l1P2R9J5E";
+
+            // Act
+            var headers = _jwtInspector.GetAllHeaders(token);
+
+            // Assert
+            Assert.Contains("alg", headers.Keys, StringComparer.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void HasClaim_ShouldReturnTrue_WhenClaimExists()
+        {
+            // Arrange
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJuYW1lIjogIkRvZSJ9.sC5aE7x2I2e3r0u1Vg3j1r3cmgH8IeXlZ2l1P2R9J5E";
+
+            // Act
+            var hasName = _jwtInspector.HasClaim(token, "name");
+
+            // Assert
+            Assert.True(hasName);
+        }
+
+        #endregion
+
+        #region Validation with keys
+
+        [Fact]
+        public void ValidateIssuerSigningKey_Symmetric_ShouldReturnTrue_WithCorrectKey()
+        {
+            // Arrange
+            string secret = "correct_secret_key_1234567890123456";
+            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddMinutes(5));
+
+            // Act
+            var ok = _jwtInspector.ValidateIssuerSigningKey(token, secret);
+
+            // Assert
+            Assert.True(ok);
+        }
+
+        [Fact]
+        public void ValidateIssuerSigningKey_Symmetric_ShouldReturnFalse_WithWrongKey()
+        {
+            // Arrange
+            string secret = "correct_secret_key_1234567890123456";
+            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddMinutes(5));
+
+            // Act
+            var ok = _jwtInspector.ValidateIssuerSigningKey(token, "wrong_secret_key_1234567890");
+
+            // Assert
+            Assert.False(ok);
+        }
+
+        [Fact]
+        public void ValidateIssuerSigningKey_AsymmetricRsa_ShouldReturnTrue_WithMatchingPublicKey()
+        {
+            // Arrange: create RSA keypair and sign with private; validate with public
+            using var rsa = System.Security.Cryptography.RSA.Create(2048);
+            var privateKey = new RsaSecurityKey(rsa.ExportParameters(true));
+            var publicKey = new RsaSecurityKey(rsa.ExportParameters(false));
+
+            var token = CreateAsymmetricJwt(privateKey, SecurityAlgorithms.RsaSha256, expires: DateTime.UtcNow.AddMinutes(5));
+
+            // Act
+            var ok = _jwtInspector.ValidateIssuerSigningKey(token, publicKey);
+
+            // Assert
+            Assert.True(ok);
+        }
+
+        #endregion
+
+        #region Issuer & Audience validation
+
+        [Fact]
+        public void ValidateIssuerAndAudience_ShouldReturnTrue_WhenBothMatch()
+        {
+            // Arrange
+            string secret = "issuer_audience_secret_1234567890_ABCDEF";
+            var issuer = "https://issuer.test";
+            var audience = "my-audience";
+            var token = CreateSymmetricJwt(secret, issuer: issuer, audience: audience, expires: DateTime.UtcNow.AddMinutes(5));
+
+            // Act
+            var ok = _jwtInspector.ValidateIssuerAndAudience(token, issuer, audience);
+
+            // Assert
+            Assert.True(ok);
+        }
+
+        [Fact]
+        public void ValidateIssuerAndAudience_ShouldReturnFalse_WhenMismatch()
+        {
+            // Arrange
+            string secret = "issuer_audience_secret_1234567890_ABCDEF";
+            var token = CreateSymmetricJwt(secret, issuer: "https://issuer.correct", audience: "aud-correct", expires: DateTime.UtcNow.AddMinutes(5));
+
+            // Act
+            var okWrongIssuer = _jwtInspector.ValidateIssuerAndAudience(token, "https://issuer.wrong", "aud-correct");
+            var okWrongAudience = _jwtInspector.ValidateIssuerAndAudience(token, "https://issuer.correct", "aud-wrong");
+
+            // Assert
+            Assert.False(okWrongIssuer);
+            Assert.False(okWrongAudience);
+        }
+
+        #endregion
+
+        #region Payload (raw) typed deserialization
+
+        private sealed class SamplePayload
+        {
+            public string? sub { get; set; }
+            public string? name { get; set; }
+            public long? iat { get; set; }
+        }
+
+        [Fact]
+        public void DecodePayloadAs_ShouldDeserializeRawPayload()
+        {
+            // Arrange: known token with sub/name/iat
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var dto = _jwtInspector.DecodePayloadAs<SamplePayload>(token);
+
+            // Assert
+            Assert.NotNull(dto);
+            Assert.Equal("1234567890", dto.sub);
+            Assert.Equal("John Doe", dto.name);
+            Assert.True(dto.iat.HasValue);
+        }
+
+        #endregion
+
+        // === Helpers (paste at the bottom of JwtInspectorTests class) ===
+
+        private static string CreateSymmetricJwt(
+            string secret,
+            string? issuer = null,
+            string? audience = null,
+            DateTime? notBefore = null,
+            DateTime? expires = null,
+            string algorithm = SecurityAlgorithms.HmacSha256)
+        {
+            secret = EnsureMinBytes(secret, 32);
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var creds = new SigningCredentials(key, algorithm);
+
+            var now = DateTime.UtcNow;
+
+            // Start from sensible defaults
+            var nbf = notBefore ?? now.AddSeconds(-5);
+            var exp = expires ?? now.AddMinutes(5);
+
+            // Ensure nbf <= exp (shift nbf back if needed)
+            if (nbf >= exp)
+                nbf = exp.AddSeconds(-5);
+
+            // Ensure iat <= nbf
+            var iat = nbf.AddSeconds(-1);
+
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.CreateJwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                subject: new System.Security.Claims.ClaimsIdentity(new[]
+                {
+            new System.Security.Claims.Claim("sub","123"),
+            new System.Security.Claims.Claim("name","John Doe")
+                }),
+                notBefore: nbf,
+                expires: exp,
+                issuedAt: iat,
+                signingCredentials: creds);
+
+            return handler.WriteToken(token);
+        }
+
+        private static string CreateAsymmetricJwt(
+            SecurityKey privateKey,
+            string algorithm,
+            string? issuer = null,
+            string? audience = null,
+            DateTime? notBefore = null,
+            DateTime? expires = null)
+        {
+            var creds = new SigningCredentials(privateKey, algorithm);
+
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.CreateJwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                subject: new System.Security.Claims.ClaimsIdentity(new[]
+                {
+            new System.Security.Claims.Claim("sub","123"),
+            new System.Security.Claims.Claim("name","John Doe")
+                }),
+                notBefore: notBefore ?? DateTime.UtcNow.AddSeconds(-1),
+                expires: expires ?? DateTime.UtcNow.AddMinutes(5),
+                issuedAt: DateTime.UtcNow,
+                signingCredentials: creds);
+
+            return handler.WriteToken(token);
+        }
+
+        private static string EnsureMinBytes(string secret, int minBytes = 32)
+        {
+            // Deterministic padding for tests (NOT for production crypto)
+            if (Encoding.UTF8.GetByteCount(secret) >= minBytes) return secret;
+            var sb = new StringBuilder(secret);
+            while (Encoding.UTF8.GetByteCount(sb.ToString()) < minBytes) sb.Append('_');
+            return sb.ToString();
+        }
+
     }
 }

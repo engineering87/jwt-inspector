@@ -1,7 +1,6 @@
 ﻿// (c) 2024 Francesco Del Re <francesco.delre.87@gmail.com>
 // This code is licensed under MIT license (see LICENSE.txt for details)
 using Microsoft.IdentityModel.Tokens;
-using JwtInspector.Core.Exceptions;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using JwtInspector.Core.Interfaces;
@@ -18,34 +17,48 @@ namespace JwtInspector.Core.Services
         /// <inheritdoc />
         public bool ValidateToken(string token, string secretKey)
         {
-            var key = Encoding.UTF8.GetBytes(secretKey);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var p = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero,
+                ValidateLifetime = true
+            };
 
             try
             {
-                var validationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
-                };
+                _tokenHandler.ValidateToken(token, p, out _);
+                return true;
+            }
+            catch (SecurityTokenException)
+            {
+                return false;
+            }
+        }
 
-                _tokenHandler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+        /// <inheritdoc />
+        public bool ValidateIssuerSigningKey(string token, SecurityKey key)
+        {
+            var p = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false
+            };
 
-                return validatedToken != null;
+            try 
+            { 
+                _tokenHandler.ValidateToken(token, p, out _); 
+                return true; 
             }
-            catch (SecurityTokenExpiredException)
-            {
-                throw new JwtInspectorException("The token has expired.");
-            }
-            catch (SecurityTokenException ex)
-            {
-                throw new JwtInspectorException("Invalid JWT token.", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new JwtInspectorException("An error occurred while decoding the JWT token.", ex);
+            catch 
+            { 
+                return false; 
             }
         }
 
@@ -66,17 +79,18 @@ namespace JwtInspector.Core.Services
         {
             try
             {
-                _tokenHandler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidIssuer = expectedIssuer,
-                    ValidAudience = expectedAudience,
-                    ValidateIssuerSigningKey = false,
-                    ValidateLifetime = false
-                }, out _);
+                var jwt = _tokenHandler.ReadJwtToken(token);
 
-                return true;
+                var issuerOk = string.Equals(
+                    jwt.Issuer?.Trim(),
+                    expectedIssuer?.Trim(),
+                    StringComparison.OrdinalIgnoreCase);
+
+                // audience can be multi-valued; match any
+                var audienceOk = jwt.Audiences.Any(a =>
+                    string.Equals(a?.Trim(), expectedAudience?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+                return issuerOk && audienceOk;
             }
             catch
             {
@@ -87,41 +101,35 @@ namespace JwtInspector.Core.Services
         /// <inheritdoc />
         public bool ValidateLifetime(string token)
         {
-            var jwtToken = _tokenHandler.ReadJwtToken(token);
+            try
+            {
+                var jwt = _tokenHandler.ReadJwtToken(token);
+                var now = DateTime.UtcNow;
 
-            return jwtToken.ValidTo > DateTime.UtcNow;
+                // If 'nbf' is present, require now >= nbf
+                if (jwt.ValidFrom != DateTime.MinValue && now < jwt.ValidFrom)
+                    return false;
+
+                // If 'exp' is present, require now < exp
+                if (jwt.ValidTo != DateTime.MinValue && now >= jwt.ValidTo)
+                    return false;
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <inheritdoc />
         public bool ValidateAlgorithm(string token, string expectedAlgorithm)
         {
-            var jwtToken = _tokenHandler.ReadJwtToken(token);
+            var jwt = _tokenHandler.ReadJwtToken(token);
+            if (string.Equals(jwt.Header.Alg, "none", StringComparison.OrdinalIgnoreCase))
+                return false; // hard-fail: unsigned tokens
 
-            var supportedAlgorithms = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "HS256", SecurityAlgorithms.HmacSha256 },
-                { "HS384", SecurityAlgorithms.HmacSha384 },
-                { "HS512", SecurityAlgorithms.HmacSha512 },
-                { "RS256", SecurityAlgorithms.RsaSha256 },
-                { "RS384", SecurityAlgorithms.RsaSha384 },
-                { "RS512", SecurityAlgorithms.RsaSha512 },
-                { "PS256", SecurityAlgorithms.RsaSsaPssSha256 },
-                { "PS384", SecurityAlgorithms.RsaSsaPssSha384 },
-                { "PS512", SecurityAlgorithms.RsaSsaPssSha512 },
-                { "ES256", SecurityAlgorithms.EcdsaSha256 },
-                { "ES384", SecurityAlgorithms.EcdsaSha384 },
-                { "ES512", SecurityAlgorithms.EcdsaSha512 },
-                { "A128KW", SecurityAlgorithms.Aes128KW },
-                { "A192KW", SecurityAlgorithms.Aes192KW },
-                { "A256KW", SecurityAlgorithms.Aes256KW },
-                { "A128GCM", SecurityAlgorithms.Aes128Gcm },
-                { "A192GCM", SecurityAlgorithms.Aes192Gcm },
-                { "A256GCM", SecurityAlgorithms.Aes256Gcm },
-                { "AES256CBCHMACSHA512 ", SecurityAlgorithms.Aes256CbcHmacSha512 }
-            };
-
-            return supportedAlgorithms.TryGetValue(expectedAlgorithm, out var mappedAlgorithm)
-                      && string.Equals(jwtToken.Header.Alg, mappedAlgorithm, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(jwt.Header.Alg?.Trim(), expectedAlgorithm?.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
         /// <inheritdoc />
@@ -164,11 +172,24 @@ namespace JwtInspector.Core.Services
         }
 
         /// <inheritdoc />
-        public bool ValidateNotBefore(string token)
+        public bool ValidateNotBefore(string token, TimeSpan? clockSkew = null)
         {
-            var jwtToken = _tokenHandler.ReadJwtToken(token);
+            try
+            {
+                var jwtToken = _tokenHandler.ReadJwtToken(token);
+                var skew = clockSkew ?? TimeSpan.Zero;
 
-            return jwtToken.ValidFrom <= DateTime.UtcNow;
+                // If no nbf provided, treat as valid
+                if (jwtToken.ValidFrom == DateTime.MinValue)
+                    return true;
+
+                // Now must be >= (nbf - skew)
+                return DateTime.UtcNow >= jwtToken.ValidFrom.Subtract(skew);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
