@@ -9,7 +9,9 @@
 
 JwtInspector is a C# library that provides utilities for decoding, validating, and inspecting JWT (JSON Web Tokens). This library simplifies working with JWTs by providing easy-to-use methods for extracting data, validating tokens, and more. 
 
-The library supports various use cases, such as decoding JWT payloads, validating token expiration, and verifying the authenticity of tokens using HMAC-SHA algorithms.
+It covers common scenarios such as decoding payloads, checking expiration, validating signatures with HMAC/keys, and producing readable summaries for debugging.
+
+> **Note:** JwtInspector targets **signed JWTs (JWS)**, three segments `header.payload.signature`. **Encrypted JWTs (JWE)** with five segments are **not** supported.
 
 ## Features
 
@@ -21,6 +23,7 @@ The library supports various use cases, such as decoding JWT payloads, validatin
   - `nbf` (not before)  
   - `sub` (subject)  
   - `jti` (JWT ID)  
+- Multi-valued claims preserved: if a claim appears multiple times (e.g., roles/scopes), `GetClaims` returns **`string[]`** for that key (otherwise a `string`).
 - Provides a unified interface for inspecting JWT headers, payloads, and signature presence.
 - Easy-to-use helpers for Base64Url encoding/decoding.
 - Safe and consistent return values (`string.Empty` instead of `null` for missing claims).
@@ -177,7 +180,7 @@ If you'd like to contribute, please fork, fix, commit and send a pull request fo
  * [Fork the repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo)
  * [Open an issue](https://github.com/engineering87/jwt-inspector/issues) if you encounter a bug or have a suggestion for improvements/features
 
-## Licensee
+## License
 JwtInspector source code is available under MIT License, see license in the source.
 
 ## Contact
