@@ -165,10 +165,12 @@ namespace JwtInspector.Core.Services
             try
             {
                 var jwt = _tokenHandler.ReadJwtToken(token);
-                var claims = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                foreach (var c in jwt.Claims)
-                    claims[c.Type] = c.Value;
-                return claims;
+                var map = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var g in jwt.Claims.GroupBy(c => c.Type, StringComparer.OrdinalIgnoreCase))
+                    map[g.Key] = g.Skip(1).Any() ? g.Select(c => c.Value).ToArray() : g.First().Value;
+
+                return map;
             }
             catch (Exception ex)
             {
@@ -266,20 +268,22 @@ namespace JwtInspector.Core.Services
         {
             var parts = token.Split('.');
             if (parts.Length != 3)
-                throw new JwtInspectorException("Invalid JWT format. A JWT token must have three parts separated by dots.");
+                throw new JwtInspectorException("Invalid JWS format. Expected three base64url segments.");
 
-            var header = DecodeBase64Url(parts[0]);
-            var payload = DecodeBase64Url(parts[1]);
+            var headerJson = DecodeBase64Url(parts[0]);
+            var payloadJson = DecodeBase64Url(parts[1]);
             var signature = parts[2];
 
-            var summary = new
+            using var h = JsonDocument.Parse(headerJson);
+            using var p = JsonDocument.Parse(payloadJson);
+
+            var obj = new
             {
-                Header = JsonSerializer.Deserialize<Dictionary<string, object>>(header),
-                Payload = JsonSerializer.Deserialize<Dictionary<string, object>>(payload),
+                Header = h.RootElement,
+                Payload = p.RootElement,
                 Signature = signature
             };
-
-            return JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true });
+            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
         }
 
         /// <inheritdoc />
