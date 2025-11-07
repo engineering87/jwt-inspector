@@ -289,9 +289,11 @@ namespace JwtInspector.Core.Services
         /// <inheritdoc />
         public bool IsExpired(string token, TimeSpan? clockSkew = null)
         {
-            var skew = clockSkew ?? TimeSpan.Zero;
+            var skew = clockSkew.GetValueOrDefault(TimeSpan.Zero);
+            if (skew < TimeSpan.Zero) 
+                skew = TimeSpan.Zero;
             var jwt = _tokenHandler.ReadJwtToken(token);
-            return jwt.ValidTo <= DateTime.UtcNow.Add(skew);
+            return DateTime.UtcNow > jwt.ValidTo.Add(skew);
         }
 
         /// <inheritdoc />
