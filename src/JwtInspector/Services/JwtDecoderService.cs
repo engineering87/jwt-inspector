@@ -290,10 +290,20 @@ namespace JwtInspector.Core.Services
         public bool IsExpired(string token, TimeSpan? clockSkew = null)
         {
             var skew = clockSkew.GetValueOrDefault(TimeSpan.Zero);
-            if (skew < TimeSpan.Zero) 
+
+            // Do not allow negative skew (would make the check stricter in an unexpected way)
+            if (skew < TimeSpan.Zero)
                 skew = TimeSpan.Zero;
+
             var jwt = _tokenHandler.ReadJwtToken(token);
-            return DateTime.UtcNow > jwt.ValidTo.Add(skew);
+
+            // If 'exp' is missing, ValidTo can be DateTime.MinValue.
+            // In that case we treat it as "no expiration information" => not expired.
+            if (jwt.ValidTo == DateTime.MinValue)
+                return false;
+
+            // Expired if now - skew is on/after exp (tolerate small clock differences)
+            return DateTime.UtcNow.Subtract(skew) >= jwt.ValidTo;
         }
 
         /// <inheritdoc />

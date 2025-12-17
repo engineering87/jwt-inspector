@@ -141,8 +141,9 @@ namespace JwtInspector.Tests
         [Fact]
         public void IsExpired_ShouldReturnTrue_ForExpiredToken()
         {
-            // Arrange
-            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgInJvbGUiOiAidXNlciIsICJpYXQiOiAiMTY4NzI3MTI5NiJ9.kG3A1qk2J4tqjX2iQ3gg-E1hZdxW9-L_vtgdGsTdmDw";
+            // Arrange: expired token with exp in the past
+            string secret = "expired_secret_1234567890_1234567890_XXXX";
+            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddMinutes(-1));
 
             // Act
             var isExpired = _jwtInspector.IsExpired(token);
@@ -302,20 +303,18 @@ namespace JwtInspector.Tests
         }
 
         [Fact]
-        public void IsExpired_ShouldHonorClockSkew()
+        public void IsExpired_ShouldHonorPositiveClockSkew()
         {
-            // Arrange: token that expires in 2 minutes
+            // Arrange: token expired 30 seconds ago
             string secret = "skew_secret_1234567890_1234567890_XXXX";
-            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddMinutes(2));
+            var token = CreateSymmetricJwt(secret, expires: DateTime.UtcNow.AddSeconds(-30));
 
             // Act
-            var expiredNoSkew = _jwtInspector.IsExpired(token); // default skew = null => 0
-            var expiredWithSkew = _jwtInspector.IsExpired(token, TimeSpan.FromMinutes(-5)); // negative skew simulates stricter check (treat earlier)
+            var expiredNoSkew = _jwtInspector.IsExpired(token); // skew = 0 => expired
+            var expiredWithSkew = _jwtInspector.IsExpired(token, TimeSpan.FromMinutes(1)); // tolerate 1 minute
 
             // Assert
-            Assert.False(expiredNoSkew);
-            // With negative skew, we effectively compare ValidTo <= UtcNow - 5 min -> should still be false in normal cases,
-            // but this asserts that the API accepts the parameter without throwing.
+            Assert.True(expiredNoSkew);
             Assert.False(expiredWithSkew);
         }
 
