@@ -10,16 +10,16 @@ namespace JwtInspector.Core.Services
         private readonly IJwtDecoder _jwtDecoder;
         private readonly IJwtValidator _jwtValidator;
 
+        [Obsolete("Prefer dependency injection: register with services.AddJwtInspector() and inject IJwtInspector.")]
         public JwtInspectorService()
+            : this(new JwtDecoderService(), new JwtValidatorService())
         {
-            _jwtDecoder = new JwtDecoderService();
-            _jwtValidator = new JwtValidatorService();
         }
 
         public JwtInspectorService(IJwtDecoder jwtDecoder, IJwtValidator jwtValidator)
         {
-            _jwtDecoder = jwtDecoder;
-            _jwtValidator = jwtValidator;
+            _jwtDecoder = jwtDecoder ?? throw new ArgumentNullException(nameof(jwtDecoder));
+            _jwtValidator = jwtValidator ?? throw new ArgumentNullException(nameof(jwtValidator));
         }
 
         /// <inheritdoc />
