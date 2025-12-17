@@ -222,6 +222,20 @@ namespace JwtInspector.Tests
             Assert.Throws<JwtInspectorException>(() => _jwtInspector.ExtractJwtParts(malformedToken));
         }
 
+        [Fact]
+        public void DecodePayload_ShouldPreserveNumericTypes_WhenPresent()
+        {
+            // Arrange: token with numeric iat in payload
+            string token = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCIsICJuYW1lIjogIkpvaG4gRG9lIiwgImlhdCI6IDE1MTYyMzkwMjJ9.MD8fpgF7N0XWhQGGVm9lA_EvVoHkcmrr74xhL2y7H3U";
+
+            // Act
+            var payload = _jwtInspector.DecodePayload(token);
+
+            // Assert
+            Assert.True(payload.ContainsKey("iat"));
+            Assert.IsNotType<string>(payload["iat"]);
+        }
+
         // === Additional tests (paste inside JwtInspectorTests class) ===
 
         #region Algorithm validation

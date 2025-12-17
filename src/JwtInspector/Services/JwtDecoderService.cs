@@ -39,9 +39,17 @@ namespace JwtInspector.Core.Services
             try
             {
                 var jwt = _tokenHandler.ReadJwtToken(token);
+
+                // JwtPayload already preserves types (numbers/bools/arrays) better than jwt.Claims
                 var payload = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                foreach (var claim in jwt.Claims)
-                    payload[claim.Type] = claim.Value;
+
+                foreach (var kv in jwt.Payload)
+                {
+                    if (kv.Value is null)
+                        continue;
+
+                    payload[kv.Key] = NormalizeJwtPayloadValue(kv.Value);
+                }
 
                 return payload;
             }
@@ -53,6 +61,16 @@ namespace JwtInspector.Core.Services
             {
                 throw new JwtInspectorException("An error occurred while decoding the JWT token.", ex);
             }
+        }
+
+        private static object NormalizeJwtPayloadValue(object value)
+        {
+            // Normalize common container shapes so callers get predictable types
+            // JwtPayload may return e.g. IList<object>, IEnumerable<object>, etc.
+            if (value is IEnumerable<object> seq && value is not string)
+                return seq.ToArray();
+
+            return value;
         }
 
         /// <inheritdoc />
